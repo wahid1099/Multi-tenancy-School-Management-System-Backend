@@ -125,14 +125,14 @@ const createApp = (): Express => {
 
   // Health check route for Vercel (no DB connection required)
   app.get("/health", (req: Request, res: Response) => {
-    const dbStatus = require("mongoose").connection.readyState;
-    const dbStatusText =
-      {
-        0: "disconnected",
-        1: "connected",
-        2: "connecting",
-        3: "disconnecting",
-      }[dbStatus] || "unknown";
+    const dbStatus = require("mongoose").connection.readyState as number;
+    const statusMap: Record<number, string> = {
+      0: "disconnected",
+      1: "connected",
+      2: "connecting",
+      3: "disconnecting",
+    };
+    const dbStatusText = statusMap[dbStatus] || "unknown";
 
     res.status(200).json({
       success: true,
