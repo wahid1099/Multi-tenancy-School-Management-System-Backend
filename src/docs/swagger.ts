@@ -25,8 +25,8 @@ const options = {
         description: "Development server",
       },
       {
-        url: `https://api.schoolmanagement.com/api/${config.API_VERSION}`,
-        description: "Production server",
+        url: `https://multi-tenancy-school-management-system-backend-main.vercel.app/api/${config.API_VERSION}`,
+        description: "Production server (Vercel)",
       },
     ],
     components: {

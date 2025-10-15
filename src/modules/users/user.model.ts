@@ -7,7 +7,24 @@ export interface IUser extends Document {
   lastName: string;
   email: string;
   password: string;
-  role: "admin" | "tenant_admin" | "teacher" | "student" | "parent";
+  role:
+    | "super_admin"
+    | "manager"
+    | "admin"
+    | "tenant_admin"
+    | "teacher"
+    | "student"
+    | "parent";
+  roleLevel: number;
+  createdBy?: string;
+  managedTenants: string[];
+  permissions: {
+    resource: string;
+    actions: string[];
+    scope: "global" | "tenant" | "own";
+    conditions?: Record<string, any>;
+  }[];
+  roleScope: "global" | "tenant" | "limited";
   avatar?: string;
   phone?: string;
   dateOfBirth?: Date;
@@ -78,8 +95,58 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ["admin", "tenant_admin", "teacher", "student", "parent"],
+      enum: [
+        "super_admin",
+        "manager",
+        "admin",
+        "tenant_admin",
+        "teacher",
+        "student",
+        "parent",
+      ],
       default: "student",
+    },
+    roleLevel: {
+      type: Number,
+      default: 0, // 0: student/parent, 1: teacher, 2: admin, 3: tenant_admin, 4: manager, 5: super_admin
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: function (this: IUser) {
+        return this.role !== "super_admin";
+      },
+    },
+    managedTenants: [
+      {
+        type: String,
+        index: true,
+      },
+    ],
+    permissions: [
+      {
+        resource: {
+          type: String,
+          required: true,
+        },
+        actions: [
+          {
+            type: String,
+            required: true,
+          },
+        ],
+        scope: {
+          type: String,
+          enum: ["global", "tenant", "own"],
+          default: "own",
+        },
+        conditions: Schema.Types.Mixed,
+      },
+    ],
+    roleScope: {
+      type: String,
+      enum: ["global", "tenant", "limited"],
+      default: "tenant",
     },
     avatar: {
       type: String,
@@ -168,6 +235,10 @@ userSchema.index({ tenant: 1, email: 1 }, { unique: true });
 userSchema.index({ tenant: 1, role: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ isEmailVerified: 1 });
+userSchema.index({ roleLevel: 1 });
+userSchema.index({ createdBy: 1 });
+userSchema.index({ managedTenants: 1 });
+userSchema.index({ roleScope: 1 });
 
 // Virtual for full name
 userSchema.virtual("fullName").get(function () {
@@ -195,6 +266,24 @@ userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();
 
   this.passwordChangedAt = new Date(Date.now() - 1000);
+  next();
+});
+
+// Pre-save middleware to set roleLevel based on role
+userSchema.pre("save", function (next) {
+  if (!this.isModified("role")) return next();
+
+  const roleLevels: Record<string, number> = {
+    student: 0,
+    parent: 0,
+    teacher: 1,
+    admin: 2,
+    tenant_admin: 3,
+    manager: 4,
+    super_admin: 5,
+  };
+
+  this.roleLevel = roleLevels[this.role] || 0;
   next();
 });
 
