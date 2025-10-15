@@ -41,17 +41,22 @@ const createApp = (): Express => {
     })
   );
 
-  // CORS configuration - Enhanced for development and production
+  // Example: Express CORS configuration
   const corsOptions = {
     origin: function (
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void
     ) {
+      const allowedOrigins = [
+        "http://localhost:5173", // ✅ hardcoded allowed URL
+        ...config.CORS_ORIGIN, // ✅ keep your config-based origins
+      ];
+
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
       // Check if origin is in allowed list
-      if (config.CORS_ORIGIN.includes(origin)) {
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
@@ -65,7 +70,7 @@ const createApp = (): Express => {
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-ID"],
-    optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+    optionsSuccessStatus: 200,
   };
 
   app.use(cors(corsOptions));
