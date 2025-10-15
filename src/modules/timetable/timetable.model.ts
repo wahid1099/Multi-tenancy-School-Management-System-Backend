@@ -11,15 +11,15 @@ export interface ITimeSlot {
     | "sunday";
   startTime: string;
   endTime: string;
-  subject: string;
-  teacher: string;
+  subject: mongoose.Types.ObjectId;
+  teacher: mongoose.Types.ObjectId;
   room?: string;
   type: "lecture" | "lab" | "tutorial" | "break" | "assembly";
 }
 
 export interface ITimetable extends Document {
   tenant: string;
-  class: string;
+  class: mongoose.Types.ObjectId;
   academicYear: string;
   term: "first" | "second" | "third" | "annual";
   effectiveFrom: Date;
@@ -33,7 +33,7 @@ export interface ITimetable extends Document {
   }[];
   workingDays: string[];
   isActive: boolean;
-  createdBy: string;
+  createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -220,7 +220,7 @@ timetableSchema.virtual("periodsPerDay").get(function () {
 });
 
 // Pre-save middleware to validate dates and time conflicts
-timetableSchema.pre("save", function (next) {
+timetableSchema.pre<ITimetable>("save", function (next) {
   if (this.effectiveFrom >= this.effectiveTo) {
     next(new Error("Effective to date must be after effective from date"));
   }
@@ -228,7 +228,7 @@ timetableSchema.pre("save", function (next) {
   // Check for time conflicts within the same day
   const daySlots: { [key: string]: ITimeSlot[] } = {};
 
-  this.timeSlots.forEach((slot) => {
+  this.timeSlots.forEach((slot: ITimeSlot) => {
     if (!daySlots[slot.day]) {
       daySlots[slot.day] = [];
     }

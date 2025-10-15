@@ -2,13 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import attendanceService from "./attendance.service";
 import catchAsync from "../../utils/catchAsync";
 import { sendSuccessResponse } from "../../utils/response";
+import { getUserId } from "../../utils/authHelpers";
 
 class AttendanceController {
   createAttendance = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
       const attendance = await attendanceService.createAttendance(
         req.tenant,
-        req.user.id,
+        getUserId(req),
         req.body
       );
 
@@ -88,7 +89,7 @@ class AttendanceController {
     async (req: Request, res: Response, next: NextFunction) => {
       const report = await attendanceService.getAttendanceReport(
         req.tenant,
-        req.query
+        req.query as any
       );
 
       sendSuccessResponse(

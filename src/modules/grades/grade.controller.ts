@@ -2,13 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import gradeService from "./grade.service";
 import catchAsync from "../../utils/catchAsync";
 import { sendSuccessResponse } from "../../utils/response";
+import { getUserId } from "../../utils/authHelpers";
 
 class GradeController {
   createGrade = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
       const grade = await gradeService.createGrade(
         req.tenant,
-        req.user.id,
+        getUserId(req),
         req.body
       );
 
@@ -68,7 +69,10 @@ class GradeController {
 
   getStudentGrades = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const grades = await gradeService.getStudentGrades(req.tenant, req.query);
+      const grades = await gradeService.getStudentGrades(
+        req.tenant,
+        req.query as any
+      );
 
       sendSuccessResponse(res, "Student grades retrieved successfully", grades);
     }
@@ -76,7 +80,10 @@ class GradeController {
 
   getGradeReport = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const report = await gradeService.getGradeReport(req.tenant, req.query);
+      const report = await gradeService.getGradeReport(
+        req.tenant,
+        req.query as any
+      );
 
       sendSuccessResponse(res, "Grade report generated successfully", report);
     }

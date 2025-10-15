@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import dashboardService from "./dashboard.service";
 import catchAsync from "../../utils/catchAsync";
 import { sendSuccessResponse } from "../../utils/response";
+import { getUserId } from "../../utils/authHelpers";
 
 class DashboardController {
   getAdminDashboard = catchAsync(
@@ -20,7 +21,7 @@ class DashboardController {
     async (req: Request, res: Response, next: NextFunction) => {
       const dashboard = await dashboardService.getTeacherDashboard(
         req.tenant,
-        req.user.id
+        getUserId(req)
       );
 
       sendSuccessResponse(
@@ -37,7 +38,7 @@ class DashboardController {
       const { Student } = require("../students/student.model");
       const student = await Student.findOne({
         tenant: req.tenant,
-        user: req.user.id,
+        user: getUserId(req),
       });
 
       if (!student) {
@@ -49,7 +50,7 @@ class DashboardController {
         student._id.toString()
       );
 
-      sendSuccessResponse(
+      return sendSuccessResponse(
         res,
         "Student dashboard data retrieved successfully",
         dashboard
@@ -59,7 +60,8 @@ class DashboardController {
 
   getDashboard = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const userRole = req.user.role;
+      const userId = getUserId(req);
+      const userRole = req.user!.role;
 
       let dashboard;
 
@@ -71,14 +73,14 @@ class DashboardController {
         case "teacher":
           dashboard = await dashboardService.getTeacherDashboard(
             req.tenant,
-            req.user.id
+            userId
           );
           break;
         case "student":
           const { Student } = require("../students/student.model");
           const student = await Student.findOne({
             tenant: req.tenant,
-            user: req.user.id,
+            user: userId,
           });
 
           if (student) {

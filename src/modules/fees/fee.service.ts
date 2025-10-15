@@ -136,7 +136,7 @@ class FeeService {
       // Apply discounts if applicable
       if (fee.discounts && fee.discounts.length > 0) {
         for (const discount of fee.discounts) {
-          if (discount.applicableFor.includes(student._id)) {
+          if (discount.applicableFor.includes(student._id as any)) {
             if (discount.type === "percentage") {
               discountApplied += (fee.totalAmount * discount.value) / 100;
             } else {

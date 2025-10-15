@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import { User, IUser } from "./user.model";
 import { Tenant } from "../tenants/tenant.model";
 import AppError from "../../utils/AppError";
@@ -67,7 +68,7 @@ class UserService {
   private generateToken(id: string): string {
     return jwt.sign({ id }, config.JWT_SECRET, {
       expiresIn: config.JWT_EXPIRES_IN,
-    });
+    } as jwt.SignOptions);
   }
 
   /**
@@ -76,7 +77,7 @@ class UserService {
   private generateRefreshToken(id: string): string {
     return jwt.sign({ id }, config.JWT_REFRESH_SECRET, {
       expiresIn: config.JWT_REFRESH_EXPIRES_IN,
-    });
+    } as jwt.SignOptions);
   }
 
   /**
@@ -98,7 +99,7 @@ class UserService {
     // Check if user already exists in this tenant
     const existingUser = await User.findOne({
       email: userData.email,
-      tenant: tenant._id.toString(),
+      tenant: (tenant._id as mongoose.Types.ObjectId).toString(),
     });
 
     if (existingUser) {
@@ -108,14 +109,18 @@ class UserService {
     // Create user
     const user = new User({
       ...userData,
-      tenant: tenant._id.toString(),
+      tenant: (tenant._id as mongoose.Types.ObjectId).toString(),
     });
 
     await user.save();
 
     // Generate tokens
-    const token = this.generateToken(user._id.toString());
-    const refreshToken = this.generateRefreshToken(user._id.toString());
+    const token = this.generateToken(
+      (user._id as mongoose.Types.ObjectId).toString()
+    );
+    const refreshToken = this.generateRefreshToken(
+      (user._id as mongoose.Types.ObjectId).toString()
+    );
 
     // Remove password from output
     user.password = undefined as any;
@@ -143,7 +148,7 @@ class UserService {
         throw new AppError("Invalid or inactive tenant", 400);
       }
 
-      query.tenant = tenantDoc._id.toString();
+      query.tenant = (tenantDoc._id as mongoose.Types.ObjectId).toString();
     }
 
     // Find user and select password
@@ -161,7 +166,7 @@ class UserService {
     }
 
     // Check if account is locked
-    if (user.isLocked()) {
+    if (user.checkIsLocked()) {
       throw new AppError(
         "Account temporarily locked due to too many failed login attempts",
         423
@@ -189,8 +194,12 @@ class UserService {
     await user.save({ validateBeforeSave: false });
 
     // Generate tokens
-    const token = this.generateToken(user._id.toString());
-    const refreshToken = this.generateRefreshToken(user._id.toString());
+    const token = this.generateToken(
+      (user._id as mongoose.Types.ObjectId).toString()
+    );
+    const refreshToken = this.generateRefreshToken(
+      (user._id as mongoose.Types.ObjectId).toString()
+    );
 
     // Remove sensitive data from output
     user.password = undefined as any;
@@ -383,7 +392,7 @@ class UserService {
       });
 
       if (tenantDoc) {
-        query.tenant = tenantDoc._id.toString();
+        query.tenant = (tenantDoc._id as mongoose.Types.ObjectId).toString();
       }
     }
 

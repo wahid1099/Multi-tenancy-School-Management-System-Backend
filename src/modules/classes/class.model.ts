@@ -6,9 +6,9 @@ export interface IClass extends Document {
   section: string;
   grade: string;
   academicYear: string;
-  classTeacher: string;
-  subjects: string[];
-  students: string[];
+  classTeacher: mongoose.Types.ObjectId;
+  subjects: mongoose.Types.ObjectId[];
+  students: mongoose.Types.ObjectId[];
   capacity: number;
   room?: string;
   schedule: {
@@ -22,8 +22,8 @@ export interface IClass extends Document {
       | "sunday";
     startTime: string;
     endTime: string;
-    subject: string;
-    teacher: string;
+    subject: mongoose.Types.ObjectId;
+    teacher: mongoose.Types.ObjectId;
   }[];
   isActive: boolean;
   createdAt: Date;
@@ -158,12 +158,12 @@ classSchema.index({ classTeacher: 1 });
 classSchema.index({ isActive: 1 });
 
 // Virtual for current enrollment
-classSchema.virtual("currentEnrollment").get(function () {
+classSchema.virtual("currentEnrollment").get(function (this: IClass) {
   return this.students.length;
 });
 
 // Virtual for available spots
-classSchema.virtual("availableSpots").get(function () {
+classSchema.virtual("availableSpots").get(function (this: IClass) {
   return this.capacity - this.students.length;
 });
 

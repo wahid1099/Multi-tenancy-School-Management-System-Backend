@@ -1,18 +1,18 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IAttendanceRecord {
-  student: string;
+  student: mongoose.Types.ObjectId;
   status: "present" | "absent" | "late" | "excused";
   remarks?: string;
 }
 
 export interface IAttendance extends Document {
   tenant: string;
-  class: string;
-  subject?: string;
+  class: mongoose.Types.ObjectId;
+  subject?: mongoose.Types.ObjectId;
   date: Date;
   period?: number;
-  teacher: string;
+  teacher: mongoose.Types.ObjectId;
   records: IAttendanceRecord[];
   totalStudents: number;
   presentCount: number;
@@ -66,7 +66,6 @@ const attendanceSchema = new Schema<IAttendance>(
     date: {
       type: Date,
       required: [true, "Date is required"],
-      index: true,
     },
     period: {
       type: Number,
@@ -127,16 +126,23 @@ attendanceSchema.index(
 );
 attendanceSchema.index({ tenant: 1, teacher: 1 });
 attendanceSchema.index({ tenant: 1, subject: 1 });
-attendanceSchema.index({ date: 1 });
 attendanceSchema.index({ isSubmitted: 1 });
 
 // Pre-save middleware to calculate statistics
-attendanceSchema.pre("save", function (next) {
+attendanceSchema.pre<IAttendance>("save", function (next) {
   this.totalStudents = this.records.length;
-  this.presentCount = this.records.filter((r) => r.status === "present").length;
-  this.absentCount = this.records.filter((r) => r.status === "absent").length;
-  this.lateCount = this.records.filter((r) => r.status === "late").length;
-  this.excusedCount = this.records.filter((r) => r.status === "excused").length;
+  this.presentCount = this.records.filter(
+    (r: IAttendanceRecord) => r.status === "present"
+  ).length;
+  this.absentCount = this.records.filter(
+    (r: IAttendanceRecord) => r.status === "absent"
+  ).length;
+  this.lateCount = this.records.filter(
+    (r: IAttendanceRecord) => r.status === "late"
+  ).length;
+  this.excusedCount = this.records.filter(
+    (r: IAttendanceRecord) => r.status === "excused"
+  ).length;
 
   if (this.totalStudents > 0) {
     this.attendancePercentage = Math.round(

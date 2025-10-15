@@ -8,8 +8,8 @@ export interface IFeeStructure {
 }
 
 export interface IFeePayment {
-  student: string;
-  feeStructure: string;
+  student: mongoose.Types.ObjectId;
+  feeStructure: mongoose.Types.ObjectId;
   amountPaid: number;
   paymentDate: Date;
   paymentMethod: "cash" | "card" | "bank_transfer" | "cheque" | "online";
@@ -21,7 +21,7 @@ export interface IFeePayment {
 
 export interface IFee extends Document {
   tenant: string;
-  class: string;
+  class: mongoose.Types.ObjectId;
   academicYear: string;
   term: "first" | "second" | "third" | "annual";
   feeStructure: IFeeStructure[];
@@ -33,18 +33,18 @@ export interface IFee extends Document {
     name: string;
     type: "percentage" | "fixed";
     value: number;
-    applicableFor: string[];
+    applicableFor: mongoose.Types.ObjectId[];
   }[];
   isActive: boolean;
-  createdBy: string;
+  createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IFeeRecord extends Document {
   tenant: string;
-  student: string;
-  fee: string;
+  student: mongoose.Types.ObjectId;
+  fee: mongoose.Types.ObjectId;
   totalAmount: number;
   discountApplied: number;
   finalAmount: number;
@@ -178,7 +178,7 @@ const feePaymentSchema = new Schema<IFeePayment>(
       required: [true, "Student is required"],
     },
     feeStructure: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: [true, "Fee structure is required"],
     },
     amountPaid: {
@@ -295,10 +295,10 @@ feeRecordSchema.index({ tenant: 1, status: 1 });
 feeRecordSchema.index({ dueDate: 1 });
 
 // Pre-save middleware to calculate total amount
-feeSchema.pre("save", function (next) {
+feeSchema.pre<IFee>("save", function (next) {
   if (this.feeStructure.length > 0) {
     this.totalAmount = this.feeStructure.reduce(
-      (sum, fee) => sum + fee.amount,
+      (sum: number, fee: IFeeStructure) => sum + fee.amount,
       0
     );
   }
@@ -306,7 +306,7 @@ feeSchema.pre("save", function (next) {
 });
 
 // Pre-save middleware to calculate balance amount and status
-feeRecordSchema.pre("save", function (next) {
+feeRecordSchema.pre<IFeeRecord>("save", function (next) {
   this.balanceAmount = this.finalAmount - this.amountPaid;
 
   if (this.amountPaid === 0) {

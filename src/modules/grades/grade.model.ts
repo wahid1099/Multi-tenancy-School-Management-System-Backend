@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IGradeItem {
-  student: string;
+  student: mongoose.Types.ObjectId;
   marksObtained: number;
   grade: string;
   percentage: number;
@@ -11,10 +11,10 @@ export interface IGradeItem {
 
 export interface IGrade extends Document {
   tenant: string;
-  exam: string;
-  class: string;
-  subject: string;
-  teacher: string;
+  exam: mongoose.Types.ObjectId;
+  class: mongoose.Types.ObjectId;
+  subject: mongoose.Types.ObjectId;
+  teacher: mongoose.Types.ObjectId;
   academicYear: string;
   gradingScale: {
     A: { min: number; max: number };
@@ -197,23 +197,23 @@ gradeSchema.index({ tenant: 1, academicYear: 1 });
 gradeSchema.index({ isPublished: 1 });
 
 // Pre-save middleware to calculate statistics
-gradeSchema.pre("save", function (next) {
+gradeSchema.pre<IGrade>("save", function (next) {
   if (this.grades.length === 0) {
     return next();
   }
 
-  const presentGrades = this.grades.filter((g) => !g.isAbsent);
+  const presentGrades = this.grades.filter((g: IGradeItem) => !g.isAbsent);
 
   this.totalStudents = this.grades.length;
-  this.absentCount = this.grades.filter((g) => g.isAbsent).length;
+  this.absentCount = this.grades.filter((g: IGradeItem) => g.isAbsent).length;
 
   if (presentGrades.length > 0) {
     const totalMarks = presentGrades.reduce(
-      (sum, g) => sum + g.marksObtained,
+      (sum: number, g: IGradeItem) => sum + g.marksObtained,
       0
     );
     const totalPercentage = presentGrades.reduce(
-      (sum, g) => sum + g.percentage,
+      (sum: number, g: IGradeItem) => sum + g.percentage,
       0
     );
 
@@ -222,11 +222,19 @@ gradeSchema.pre("save", function (next) {
     this.averagePercentage =
       Math.round((totalPercentage / presentGrades.length) * 100) / 100;
 
-    this.highestMarks = Math.max(...presentGrades.map((g) => g.marksObtained));
-    this.lowestMarks = Math.min(...presentGrades.map((g) => g.marksObtained));
+    this.highestMarks = Math.max(
+      ...presentGrades.map((g: IGradeItem) => g.marksObtained)
+    );
+    this.lowestMarks = Math.min(
+      ...presentGrades.map((g: IGradeItem) => g.marksObtained)
+    );
 
-    this.passCount = presentGrades.filter((g) => g.grade !== "F").length;
-    this.failCount = presentGrades.filter((g) => g.grade === "F").length;
+    this.passCount = presentGrades.filter(
+      (g: IGradeItem) => g.grade !== "F"
+    ).length;
+    this.failCount = presentGrades.filter(
+      (g: IGradeItem) => g.grade === "F"
+    ).length;
   }
 
   next();

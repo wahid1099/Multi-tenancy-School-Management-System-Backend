@@ -2,13 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import examService from "./exam.service";
 import catchAsync from "../../utils/catchAsync";
 import { sendSuccessResponse } from "../../utils/response";
+import { getUserId } from "../../utils/authHelpers";
 
 class ExamController {
   createExam = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
       const exam = await examService.createExam(
         req.tenant,
-        req.user.id,
+        getUserId(req),
         req.body
       );
 

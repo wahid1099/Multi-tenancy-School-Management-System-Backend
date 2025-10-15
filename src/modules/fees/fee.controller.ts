@@ -2,11 +2,16 @@ import { Request, Response, NextFunction } from "express";
 import feeService from "./fee.service";
 import catchAsync from "../../utils/catchAsync";
 import { sendSuccessResponse } from "../../utils/response";
+import { getUserId } from "../../utils/authHelpers";
 
 class FeeController {
   createFee = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const fee = await feeService.createFee(req.tenant, req.user.id, req.body);
+      const fee = await feeService.createFee(
+        req.tenant,
+        getUserId(req),
+        req.body
+      );
 
       sendSuccessResponse(res, "Fee structure created successfully", fee, 201);
     }
@@ -82,7 +87,10 @@ class FeeController {
 
   getFeeReport = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const report = await feeService.getFeeReport(req.tenant, req.query);
+      const report = await feeService.getFeeReport(
+        req.tenant,
+        req.query as any
+      );
 
       sendSuccessResponse(res, "Fee report generated successfully", report);
     }

@@ -13,8 +13,8 @@ export interface IExam extends Document {
   tenant: string;
   title: string;
   description?: string;
-  subject: string;
-  class: string;
+  subject: mongoose.Types.ObjectId;
+  class: mongoose.Types.ObjectId;
   examType: "quiz" | "unit_test" | "midterm" | "final" | "assignment";
   totalMarks: number;
   passingMarks: number;
@@ -28,7 +28,7 @@ export interface IExam extends Document {
   maxAttempts: number;
   showResults: boolean;
   randomizeQuestions: boolean;
-  createdBy: string;
+  createdBy: mongoose.Types.ObjectId;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -177,12 +177,12 @@ examSchema.index({ startDate: 1, endDate: 1 });
 examSchema.index({ isPublished: 1, isActive: 1 });
 
 // Virtual for question count
-examSchema.virtual("questionCount").get(function () {
+examSchema.virtual("questionCount").get(function (this: IExam) {
   return this.questions.length;
 });
 
 // Pre-save middleware to validate dates and calculate total marks
-examSchema.pre("save", function (next) {
+examSchema.pre<IExam>("save", function (next) {
   if (this.startDate >= this.endDate) {
     next(new Error("End date must be after start date"));
   }
@@ -193,7 +193,10 @@ examSchema.pre("save", function (next) {
 
   // Calculate total marks from questions
   if (this.questions.length > 0) {
-    const calculatedTotal = this.questions.reduce((sum, q) => sum + q.marks, 0);
+    const calculatedTotal = this.questions.reduce(
+      (sum: number, q: IExamQuestion) => sum + q.marks,
+      0
+    );
     if (calculatedTotal !== this.totalMarks) {
       this.totalMarks = calculatedTotal;
     }

@@ -48,7 +48,6 @@ const tenantSchema = new Schema<ITenant>(
     subdomain: {
       type: String,
       required: [true, "Subdomain is required"],
-      unique: true,
       lowercase: true,
       trim: true,
       match: [
@@ -182,7 +181,7 @@ const tenantSchema = new Schema<ITenant>(
 );
 
 // Indexes
-tenantSchema.index({ subdomain: 1 });
+tenantSchema.index({ subdomain: 1 }, { unique: true });
 tenantSchema.index({ "contact.email": 1 });
 tenantSchema.index({ isActive: 1 });
 

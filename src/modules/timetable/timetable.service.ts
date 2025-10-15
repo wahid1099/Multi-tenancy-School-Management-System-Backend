@@ -371,7 +371,8 @@ class TimetableService {
 
     timetables.forEach((timetable) => {
       const slots = timetable.timeSlots.filter(
-        (slot) => slot.teacher._id.toString() === teacher
+        (slot) =>
+          ((slot.teacher as any)._id || slot.teacher).toString() === teacher
       );
 
       slots.forEach((slot) => {

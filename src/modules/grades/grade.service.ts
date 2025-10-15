@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Grade, IGrade, IGradeItem } from "./grade.model";
 import { Exam } from "../exams/exam.model";
 import { Student } from "../students/student.model";
@@ -94,7 +95,7 @@ class GradeService {
     const validStudents = await Student.find({
       _id: { $in: studentIds },
       tenant,
-      class: exam.class._id,
+      class: (exam.class as any)._id || exam.class,
       status: "active",
     });
 
@@ -109,7 +110,7 @@ class GradeService {
     const processedGrades: IGradeItem[] = gradeData.grades.map((gradeItem) => {
       if (gradeItem.isAbsent) {
         return {
-          student: gradeItem.student,
+          student: gradeItem.student as any,
           marksObtained: 0,
           grade: "F",
           percentage: 0,
@@ -124,7 +125,7 @@ class GradeService {
       const grade = this.calculateGrade(percentage, gradeData.gradingScale);
 
       return {
-        student: gradeItem.student,
+        student: gradeItem.student as any,
         marksObtained: gradeItem.marksObtained,
         grade,
         percentage,
@@ -136,8 +137,8 @@ class GradeService {
     const newGrade = new Grade({
       tenant,
       exam: gradeData.exam,
-      class: exam.class._id,
-      subject: exam.subject._id,
+      class: (exam.class as any)._id || exam.class,
+      subject: (exam.subject as any)._id || exam.subject,
       teacher: teacherId,
       academicYear: gradeData.academicYear,
       gradingScale: gradeData.gradingScale,
@@ -268,7 +269,7 @@ class GradeService {
         (gradeItem) => {
           if (gradeItem.isAbsent) {
             return {
-              student: gradeItem.student,
+              student: gradeItem.student as any,
               marksObtained: 0,
               grade: "F",
               percentage: 0,
@@ -287,7 +288,7 @@ class GradeService {
           );
 
           return {
-            student: gradeItem.student,
+            student: gradeItem.student as any,
             marksObtained: gradeItem.marksObtained,
             grade: gradeValue,
             percentage,

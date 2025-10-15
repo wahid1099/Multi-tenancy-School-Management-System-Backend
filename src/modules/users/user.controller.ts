@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import userService from "./user.service";
 import catchAsync from "../../utils/catchAsync";
 import { sendSuccessResponse } from "../../utils/response";
+import { getUserId } from "../../utils/authHelpers";
 
 /**
  * User Controller Class
@@ -78,7 +79,7 @@ class UserController {
    */
   getMe = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const user = await userService.getUserById(req.user.id, req.tenant);
+      const user = await userService.getUserById(getUserId(req), req.tenant);
 
       sendSuccessResponse(res, "User profile retrieved successfully", user);
     }
@@ -92,7 +93,7 @@ class UserController {
   updateMe = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
       const user = await userService.updateUser(
-        req.user.id,
+        getUserId(req),
         req.tenant,
         req.body
       );
@@ -111,7 +112,7 @@ class UserController {
       const { currentPassword, newPassword } = req.body;
 
       await userService.changePassword(
-        req.user.id,
+        getUserId(req),
         req.tenant,
         currentPassword,
         newPassword

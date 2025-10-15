@@ -363,7 +363,9 @@ class DashboardService {
       })),
       ...recentExams.map((exam) => ({
         type: "exam_created",
-        message: `Exam "${exam.title}" created for ${exam.class.name} - ${exam.subject.name}`,
+        message: `Exam "${exam.title}" created for ${
+          (exam.class as any).name || "Class"
+        } - ${(exam.subject as any).name || "Subject"}`,
         timestamp: exam.createdAt,
       })),
     ];
@@ -424,7 +426,9 @@ class DashboardService {
 
   private async getTeacherTodaySchedule(tenant: string, teacherId: string) {
     const today = new Date();
-    const dayName = today.toLocaleDateString("en-US", { weekday: "lowercase" });
+    const dayName = today
+      .toLocaleDateString("en-US", { weekday: "long" })
+      .toLowerCase();
 
     const schedule = await Timetable.find({
       tenant,
@@ -504,7 +508,7 @@ class DashboardService {
 
     const [subjectCount, attendanceRate, averageGrade] = await Promise.all([
       Subject.countDocuments({
-        _id: { $in: student.class.subjects },
+        _id: { $in: (student.class as any).subjects || [] },
         isActive: true,
       }),
       this.getStudentAttendanceRate(tenant, studentId),
@@ -577,7 +581,13 @@ class DashboardService {
     if (totalGrades === 0) return "N/A";
 
     const avgPoints = gradePoints / totalGrades;
-    const gradeMap = { 4: "A", 3: "B", 2: "C", 1: "D", 0: "F" };
+    const gradeMap: { [key: number]: string } = {
+      4: "A",
+      3: "B",
+      2: "C",
+      1: "D",
+      0: "F",
+    };
     return gradeMap[Math.round(avgPoints)] || "F";
   }
 
@@ -586,7 +596,9 @@ class DashboardService {
     if (!student) return [];
 
     const today = new Date();
-    const dayName = today.toLocaleDateString("en-US", { weekday: "lowercase" });
+    const dayName = today
+      .toLocaleDateString("en-US", { weekday: "long" })
+      .toLowerCase();
 
     const schedule = await Timetable.findOne({
       tenant,

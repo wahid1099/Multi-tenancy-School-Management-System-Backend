@@ -2,13 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import timetableService from "./timetable.service";
 import catchAsync from "../../utils/catchAsync";
 import { sendSuccessResponse } from "../../utils/response";
+import { getUserId } from "../../utils/authHelpers";
 
 class TimetableController {
   createTimetable = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
       const timetable = await timetableService.createTimetable(
         req.tenant,
-        req.user.id,
+        getUserId(req),
         req.body
       );
 
@@ -73,7 +74,7 @@ class TimetableController {
     async (req: Request, res: Response, next: NextFunction) => {
       const timetable = await timetableService.getTeacherTimetable(
         req.tenant,
-        req.query
+        req.query as any
       );
 
       sendSuccessResponse(

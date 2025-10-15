@@ -38,7 +38,7 @@ export interface IUser extends Document {
   ): Promise<boolean>;
   changedPasswordAfter(JWTTimestamp: number): boolean;
   createPasswordResetToken(): string;
-  isLocked(): boolean;
+  checkIsLocked(): boolean;
   incLoginAttempts(): Promise<void>;
   resetLoginAttempts(): Promise<void>;
 }
@@ -233,7 +233,7 @@ userSchema.methods.createPasswordResetToken = function (): string {
 };
 
 // Instance method to check if account is locked
-userSchema.methods.isLocked = function (): boolean {
+userSchema.methods.checkIsLocked = function (): boolean {
   return !!(this.lockUntil && this.lockUntil > new Date());
 };
 
@@ -250,7 +250,7 @@ userSchema.methods.incLoginAttempts = async function (): Promise<void> {
   const updates: any = { $inc: { loginAttempts: 1 } };
 
   // Lock account after 5 failed attempts for 2 hours
-  if (this.loginAttempts + 1 >= 5 && !this.isLocked()) {
+  if (this.loginAttempts + 1 >= 5 && !this.checkIsLocked()) {
     updates.$set = { lockUntil: new Date(Date.now() + 2 * 60 * 60 * 1000) };
   }
 

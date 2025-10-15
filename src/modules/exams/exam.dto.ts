@@ -15,7 +15,7 @@ const examQuestionSchema = Joi.object({
     .items(Joi.string().trim())
     .when("type", {
       is: Joi.valid("multiple_choice", "true_false"),
-      then: Joi.required().min(2),
+      then: Joi.array().required().min(2),
       otherwise: Joi.optional(),
     })
     .messages({

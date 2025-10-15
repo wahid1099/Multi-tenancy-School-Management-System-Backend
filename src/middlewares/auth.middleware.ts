@@ -5,15 +5,7 @@ import AppError from "../utils/AppError";
 import catchAsync from "../utils/catchAsync";
 import config from "../config";
 
-// Extend Request interface to include user and tenant
-declare global {
-  namespace Express {
-    interface Request {
-      user?: any;
-      tenant?: string;
-    }
-  }
-}
+// Type declarations are now in src/types/express.d.ts
 
 /**
  * Verify JWT token and authenticate user
@@ -50,7 +42,7 @@ export const authenticate = catchAsync(
     }
 
     // 4) Check if user is active
-    if (!currentUser.active) {
+    if (!currentUser.isActive) {
       return next(new AppError("Your account has been deactivated.", 401));
     }
 
@@ -79,7 +71,7 @@ export const authenticate = catchAsync(
  */
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return next(
         new AppError("You do not have permission to perform this action", 403)
       );

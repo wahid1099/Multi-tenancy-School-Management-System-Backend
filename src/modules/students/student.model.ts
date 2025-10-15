@@ -2,11 +2,11 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IStudent extends Document {
   tenant: string;
-  user: string; // Reference to User model
+  user: mongoose.Types.ObjectId; // Reference to User model
   studentId: string;
   admissionNumber: string;
   admissionDate: Date;
-  class: string; // Reference to Class model
+  class: mongoose.Types.ObjectId; // Reference to Class model
   rollNumber?: string;
   academicYear: string;
   guardianInfo: {
