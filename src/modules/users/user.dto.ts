@@ -38,7 +38,15 @@ export const registerUserSchema = Joi.object({
     "string.empty": "Confirm password is required",
   }),
   role: Joi.string()
-    .valid("admin", "tenant_admin", "teacher", "student", "parent")
+    .valid(
+      "super_admin",
+      "manager",
+      "admin",
+      "tenant_admin",
+      "teacher",
+      "student",
+      "parent"
+    )
     .default("student"),
   phone: Joi.string().optional().trim(),
   dateOfBirth: Joi.date().optional().max("now").messages({
@@ -52,7 +60,7 @@ export const registerUserSchema = Joi.object({
     zipCode: Joi.string().optional().trim(),
     country: Joi.string().optional().trim(),
   }).optional(),
-});
+}).unknown(true); // Allow extra fields that aren't validated
 
 /**
  * User login validation schema
@@ -169,7 +177,15 @@ export const userQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(10),
   search: Joi.string().optional().trim(),
   role: Joi.string()
-    .valid("admin", "tenant_admin", "teacher", "student", "parent")
+    .valid(
+      "super_admin",
+      "manager",
+      "admin",
+      "tenant_admin",
+      "teacher",
+      "student",
+      "parent"
+    )
     .optional(),
   isActive: Joi.boolean().optional(),
   isEmailVerified: Joi.boolean().optional(),
@@ -206,7 +222,15 @@ export const userParamsSchema = Joi.object({
 export const updateUserRoleSchema = Joi.object({
   role: Joi.string()
     .required()
-    .valid("admin", "tenant_admin", "teacher", "student", "parent")
+    .valid(
+      "super_admin",
+      "manager",
+      "admin",
+      "tenant_admin",
+      "teacher",
+      "student",
+      "parent"
+    )
     .messages({
       "string.empty": "Role is required",
       "any.only": "Invalid role specified",

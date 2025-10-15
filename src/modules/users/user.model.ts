@@ -114,7 +114,14 @@ const userSchema = new Schema<IUser>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: function (this: IUser) {
-        return this.role !== "super_admin";
+        // Only require createdBy for admin roles, not for students/teachers/parents
+        const selfRegisterRoles = [
+          "student",
+          "teacher",
+          "parent",
+          "super_admin",
+        ];
+        return !selfRegisterRoles.includes(this.role);
       },
     },
     managedTenants: [

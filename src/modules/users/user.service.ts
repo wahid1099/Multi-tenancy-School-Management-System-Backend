@@ -12,7 +12,14 @@ export interface RegisterUserData {
   lastName: string;
   email: string;
   password: string;
-  role?: "admin" | "tenant_admin" | "teacher" | "student" | "parent";
+  role?:
+    | "super_admin"
+    | "manager"
+    | "admin"
+    | "tenant_admin"
+    | "teacher"
+    | "student"
+    | "parent";
   phone?: string;
   dateOfBirth?: Date;
   gender?: "male" | "female" | "other";
@@ -51,7 +58,14 @@ export interface UserQuery {
   page?: number;
   limit?: number;
   search?: string;
-  role?: "admin" | "tenant_admin" | "teacher" | "student" | "parent";
+  role?:
+    | "super_admin"
+    | "manager"
+    | "admin"
+    | "tenant_admin"
+    | "teacher"
+    | "student"
+    | "parent";
   isActive?: boolean;
   isEmailVerified?: boolean;
   sortBy?: string;
@@ -146,41 +160,27 @@ class UserService {
   }
 
   /**
-   * Login user
+   * Login user - Simplified: only email and password required
    */
   async loginUser(
     loginData: LoginUserData
   ): Promise<{ user: IUser; token: string; refreshToken: string }> {
-    const { email, password, tenant } = loginData;
+    const { email, password } = loginData;
 
-    // Build query
-    const query: any = { email };
-    if (tenant) {
-      const tenantQuery: any = { isActive: true };
-
-      // Check if tenant value is a valid ObjectId
-      if (mongoose.Types.ObjectId.isValid(tenant)) {
-        tenantQuery.$or = [{ _id: tenant }, { subdomain: tenant }];
-      } else {
-        tenantQuery.subdomain = tenant;
-      }
-
-      const tenantDoc = await Tenant.findOne(tenantQuery);
-
-      if (!tenantDoc) {
-        throw new AppError("Invalid or inactive tenant", 400);
-      }
-
-      query.tenant = (tenantDoc._id as mongoose.Types.ObjectId).toString();
-    }
-
-    // Find user and select password
-    const user = await User.findOne(query).select(
+    // Find user by email only and select password
+    const user = await User.findOne({ email }).select(
       "+password +loginAttempts +lockUntil +isActive"
     );
+    console.log(user);
 
     if (!user) {
       throw new AppError("Invalid email or password", 401);
+    }
+
+    // Validate that user's tenant exists and is active
+    const userTenant = await Tenant.findById(user.tenant);
+    if (!userTenant || !userTenant.isActive) {
+      throw new AppError("User's tenant is inactive or not found", 401);
     }
 
     // Check if user is active
@@ -201,6 +201,7 @@ class UserService {
       password,
       user.password
     );
+    console.log(isPasswordCorrect);
 
     if (!isPasswordCorrect) {
       await user.incLoginAttempts();
