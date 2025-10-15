@@ -104,7 +104,7 @@ const createApp = (): Express => {
   app.get("/", (req: Request, res: Response) => {
     res.json({
       success: true,
-      message: "Welcome to School Management System API",
+      message: "Welcome to Multi tanent School Management System API",
       version: config.API_VERSION,
       documentation: "/api-docs",
       health: "/api/v1/health",
