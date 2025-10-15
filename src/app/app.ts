@@ -49,7 +49,8 @@ const createApp = (): Express => {
       callback: (err: Error | null, allow?: boolean) => void
     ) {
       const allowedOrigins = [
-        "http://localhost:5173", // ✅ hardcoded allowed URL
+        "http://localhost:5173",
+        "https://guileless-florentine-83481e.netlify.app", // ✅ hardcoded allowed URL
         ...config.CORS_ORIGIN, // ✅ keep your config-based origins
       ];
 
