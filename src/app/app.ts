@@ -20,7 +20,7 @@ const createApp = (): Express => {
   // Trust proxy (for deployment behind reverse proxy)
   app.set("trust proxy", 1);
 
-  // Security middleware
+  // Security middleware - Modified for Swagger compatibility
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -30,24 +30,45 @@ const createApp = (): Express => {
             "'self'",
             "'unsafe-inline'",
             "https://fonts.googleapis.com",
+            "https://unpkg.com",
           ],
           fontSrc: ["'self'", "https://fonts.gstatic.com"],
           imgSrc: ["'self'", "data:", "https:"],
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+          connectSrc: ["'self'"],
         },
       },
     })
   );
 
-  // CORS configuration
-  app.use(
-    cors({
-      origin: config.CORS_ORIGIN,
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-ID"],
-    })
-  );
+  // CORS configuration - Enhanced for development and production
+  const corsOptions = {
+    origin: function (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowed list
+      if (config.CORS_ORIGIN.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow localhost in development
+      if (config.NODE_ENV === "development" && origin.includes("localhost")) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"), false);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-ID"],
+    optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+  };
+
+  app.use(cors(corsOptions));
 
   // Rate limiting
   const limiter = rateLimit({
@@ -87,6 +108,19 @@ const createApp = (): Express => {
       version: config.API_VERSION,
       documentation: "/api-docs",
       health: "/api/v1/health",
+      timestamp: new Date().toISOString(),
+      environment: config.NODE_ENV,
+    });
+  });
+
+  // Health check route for Vercel
+  app.get("/health", (req: Request, res: Response) => {
+    res.status(200).json({
+      success: true,
+      message: "Server is healthy",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: config.NODE_ENV,
     });
   });
 

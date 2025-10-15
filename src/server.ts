@@ -14,54 +14,61 @@ process.on("uncaughtException", (err: Error) => {
 // Create Express app
 const app = createApp();
 
-// Connect to database and start server
-const startServer = async (): Promise<void> => {
-  try {
-    // Connect to MongoDB
-    await database.connect();
+// For Vercel, we need to export the app directly
+if (process.env.VERCEL) {
+  // Connect to database for Vercel
+  database.connect().catch(console.error);
+  module.exports = app;
+} else {
+  // Connect to database and start server for local development
+  const startServer = async (): Promise<void> => {
+    try {
+      // Connect to MongoDB
+      await database.connect();
 
-    // Start server
-    const server = app.listen(config.PORT, () => {
-      console.log(`
+      // Start server
+      const server = app.listen(config.PORT, () => {
+        console.log(`
 🚀 Server is running!
 📍 Environment: ${config.NODE_ENV}
 🌐 URL: http://localhost:${config.PORT}
 📚 API Docs: http://localhost:${config.PORT}/api-docs
 🏥 Health Check: http://localhost:${config.PORT}/api/${config.API_VERSION}/health
-      `);
-    });
-
-    // Handle unhandled promise rejections
-    process.on("unhandledRejection", (err: Error) => {
-      console.error("UNHANDLED REJECTION! 💥 Shutting down...");
-      console.error("Error:", err.name, err.message);
-      server.close(() => {
-        process.exit(1);
+        `);
       });
-    });
 
-    // Handle SIGTERM
-    process.on("SIGTERM", () => {
-      console.log("👋 SIGTERM RECEIVED. Shutting down gracefully");
-      server.close(() => {
-        console.log("💥 Process terminated!");
+      // Handle unhandled promise rejections
+      process.on("unhandledRejection", (err: Error) => {
+        console.error("UNHANDLED REJECTION! 💥 Shutting down...");
+        console.error("Error:", err.name, err.message);
+        server.close(() => {
+          process.exit(1);
+        });
       });
-    });
 
-    // Handle SIGINT (Ctrl+C)
-    process.on("SIGINT", () => {
-      console.log("👋 SIGINT RECEIVED. Shutting down gracefully");
-      server.close(async () => {
-        await database.disconnect();
-        console.log("💥 Process terminated!");
-        process.exit(0);
+      // Handle SIGTERM
+      process.on("SIGTERM", () => {
+        console.log("👋 SIGTERM RECEIVED. Shutting down gracefully");
+        server.close(() => {
+          console.log("💥 Process terminated!");
+        });
       });
-    });
-  } catch (error) {
-    console.error("❌ Failed to start server:", error);
-    process.exit(1);
-  }
-};
 
-// Start the server
-startServer();
+      // Handle SIGINT (Ctrl+C)
+      process.on("SIGINT", () => {
+        console.log("👋 SIGINT RECEIVED. Shutting down gracefully");
+        server.close(async () => {
+          await database.disconnect();
+          console.log("💥 Process terminated!");
+          process.exit(0);
+        });
+      });
+    } catch (error) {
+      console.error("❌ Failed to start server:", error);
+      process.exit(1);
+    }
+  };
+
+  // Start the server
+  startServer();
+}

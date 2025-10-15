@@ -8,11 +8,24 @@
     ],
     "routes": [
         {
+            "src": "/api-docs(.*)",
+            "dest": "/src/server.ts"
+        },
+        {
+            "src": "/api/(.*)",
+            "dest": "/src/server.ts"
+        },
+        {
             "src": "/(.*)",
             "dest": "/src/server.ts"
         }
     ],
     "env": {
         "NODE_ENV": "production"
+    },
+    "functions": {
+        "src/server.ts": {
+            "maxDuration": 30
+        }
     }
 }
