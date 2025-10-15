@@ -97,10 +97,19 @@ class UserService {
     userData: RegisterUserData
   ): Promise<{ user: IUser; token: string; refreshToken: string }> {
     // Check if tenant exists and is active
-    const tenant = await Tenant.findOne({
-      $or: [{ _id: userData.tenant }, { subdomain: userData.tenant }],
-      isActive: true,
-    });
+    const tenantQuery: any = { isActive: true };
+
+    // Check if tenant value is a valid ObjectId
+    if (mongoose.Types.ObjectId.isValid(userData.tenant)) {
+      tenantQuery.$or = [
+        { _id: userData.tenant },
+        { subdomain: userData.tenant },
+      ];
+    } else {
+      tenantQuery.subdomain = userData.tenant;
+    }
+
+    const tenant = await Tenant.findOne(tenantQuery);
 
     if (!tenant) {
       throw new AppError("Invalid or inactive tenant", 400);
@@ -147,10 +156,16 @@ class UserService {
     // Build query
     const query: any = { email };
     if (tenant) {
-      const tenantDoc = await Tenant.findOne({
-        $or: [{ _id: tenant }, { subdomain: tenant }],
-        isActive: true,
-      });
+      const tenantQuery: any = { isActive: true };
+
+      // Check if tenant value is a valid ObjectId
+      if (mongoose.Types.ObjectId.isValid(tenant)) {
+        tenantQuery.$or = [{ _id: tenant }, { subdomain: tenant }];
+      } else {
+        tenantQuery.subdomain = tenant;
+      }
+
+      const tenantDoc = await Tenant.findOne(tenantQuery);
 
       if (!tenantDoc) {
         throw new AppError("Invalid or inactive tenant", 400);

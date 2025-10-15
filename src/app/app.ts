@@ -109,10 +109,14 @@ const createApp = (): Express => {
   app.get("/", (req: Request, res: Response) => {
     res.json({
       success: true,
-      message: "Welcome to Multi tanent School Management System API",
+      message: "Welcome to Multi-tenant School Management System API",
       version: config.API_VERSION,
-      documentation: "/api-docs",
-      health: "/api/v1/health",
+      documentation: {
+        swagger: "/api-docs",
+        json: "/api-docs.json",
+      },
+      health: "/health",
+      api: `/api/${config.API_VERSION}`,
       timestamp: new Date().toISOString(),
       environment: config.NODE_ENV,
     });

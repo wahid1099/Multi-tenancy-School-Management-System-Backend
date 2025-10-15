@@ -97,13 +97,36 @@ curl -H "Origin: https://your-frontend-url.vercel.app" \
      https://your-backend-url.vercel.app/api/v1/health
 ```
 
-### 5. Troubleshooting
+### 5. Seed Demo Data (Optional)
+
+To create the demo tenant for testing:
+
+```bash
+# Set your MongoDB URI (if not already set)
+export MONGODB_URI="your-mongodb-connection-string"
+
+# Run the seeding script locally
+npm run seed:demo
+```
+
+This creates a tenant with subdomain "demo-school" that the frontend uses by default.
+
+**Note:** You can also run this script on Vercel by creating a serverless function, but it's easier to run locally once.
+
+### 6. Troubleshooting
 
 #### Swagger Not Loading
 
-- Check CSP headers in browser console
-- Verify `/api-docs` route is accessible
-- Check Vercel function logs
+- **MIME type errors**: Fixed by using embedded documentation instead of external assets
+- **Documentation available at**: `https://your-backend-url.vercel.app/api-docs`
+- **JSON spec available at**: `https://your-backend-url.vercel.app/api-docs.json`
+- Check Vercel function logs for any server errors
+
+#### ObjectId Casting Errors
+
+- **"Cast to ObjectId failed for value 'demo-school'"**: Fixed by validating ObjectId before querying
+- **Missing demo tenant**: Run `npm run seed:demo` to create the demo tenant
+- **Tenant not found**: Ensure the tenant exists in your MongoDB database
 
 #### CORS Issues
 
@@ -117,7 +140,7 @@ curl -H "Origin: https://your-frontend-url.vercel.app" \
 - Check Vercel function logs for connection errors
 - Ensure IP whitelist includes Vercel IPs (0.0.0.0/0 for all)
 
-### 6. Role Hierarchy System
+### 7. Role Hierarchy System
 
 #### Default Role Levels
 
