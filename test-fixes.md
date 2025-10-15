@@ -139,6 +139,14 @@ VITE_API_URL=https://multi-tenancy-school-management-sys.vercel.app
 - Check MongoDB connection
 - Verify the tenant validation logic is working
 
+### If database connection errors occur:
+
+- Check MongoDB URI in environment variables
+- Verify network connectivity to MongoDB
+- Check Vercel function logs for connection timeouts
+- The system now has automatic retry logic and connection pooling
+- Health check endpoint shows database status: `/health`
+
 ### If frontend can't connect:
 
 - Check CORS settings

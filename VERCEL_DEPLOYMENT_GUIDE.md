@@ -136,9 +136,12 @@ This creates a tenant with subdomain "demo-school" that the frontend uses by def
 
 #### Database Connection
 
-- Verify MongoDB URI is correct
-- Check Vercel function logs for connection errors
-- Ensure IP whitelist includes Vercel IPs (0.0.0.0/0 for all)
+- **Connection errors**: Fixed with automatic retry logic and connection pooling
+- **Serverless optimization**: Database connections are now cached and reused
+- **Verify MongoDB URI**: Check environment variables in Vercel dashboard
+- **Check connection status**: Use `/health` endpoint to see database status
+- **IP whitelist**: Ensure Vercel IPs are allowed (0.0.0.0/0 for all)
+- **Connection timeout**: System now has exponential backoff retry logic
 
 ### 7. Role Hierarchy System
 

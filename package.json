@@ -12,7 +12,8 @@
     "test:watch": "jest --watch",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "seed:demo": "node scripts/seed-demo-tenant.js"
+    "seed:demo": "node scripts/seed-demo-tenant.js",
+    "test:db": "node scripts/test-db-connection.js"
   },
   "keywords": [
     "school",

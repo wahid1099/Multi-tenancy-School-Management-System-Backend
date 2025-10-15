@@ -8,6 +8,7 @@ import rateLimit from "express-rate-limit";
 import config from "../config";
 import routes from "../routes";
 import globalErrorHandler from "../middlewares/error.middleware";
+import { requireDatabaseConnection } from "../middlewares/database.middleware";
 import { setupSwagger } from "../docs/swagger";
 import AppError from "../utils/AppError";
 
@@ -122,19 +123,32 @@ const createApp = (): Express => {
     });
   });
 
-  // Health check route for Vercel
+  // Health check route for Vercel (no DB connection required)
   app.get("/health", (req: Request, res: Response) => {
+    const dbStatus = require("mongoose").connection.readyState;
+    const dbStatusText =
+      {
+        0: "disconnected",
+        1: "connected",
+        2: "connecting",
+        3: "disconnecting",
+      }[dbStatus] || "unknown";
+
     res.status(200).json({
       success: true,
       message: "Server is healthy",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: config.NODE_ENV,
+      database: {
+        status: dbStatusText,
+        readyState: dbStatus,
+      },
     });
   });
 
-  // API routes
-  app.use(`/api/${config.API_VERSION}`, routes);
+  // API routes with database connection requirement
+  app.use(`/api/${config.API_VERSION}`, requireDatabaseConnection, routes);
 
   // Handle undefined routes
   app.all("*", (req: Request, res: Response, next: NextFunction) => {

@@ -16,8 +16,7 @@ const app = createApp();
 
 // For Vercel, we need to export the app directly
 if (process.env.VERCEL) {
-  // Connect to database for Vercel
-  database.connect().catch(console.error);
+  // For Vercel, database connection is handled by middleware per request
   module.exports = app;
 } else {
   // Connect to database and start server for local development

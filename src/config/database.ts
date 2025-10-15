@@ -22,10 +22,12 @@ class Database {
   public async connect(): Promise<void> {
     try {
       const options = {
-        maxPoolSize: 10,
+        maxPoolSize: process.env.VERCEL ? 5 : 10, // Smaller pool for serverless
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
-        bufferCommands: false,
+        bufferCommands: process.env.VERCEL ? true : false, // Buffer commands in serverless
+        maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+        connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
       };
 
       await mongoose.connect(config.MONGODB_URI, options);
