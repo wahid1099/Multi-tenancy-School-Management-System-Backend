@@ -1,8 +1,8 @@
 import { Request } from "express";
-import { IUser } from "../modules/users/user.model";
+import { AuthenticatedUser } from "../types/express";
 import AppError from "./AppError";
 
-export const requireUser = (req: Request): IUser => {
+export const requireUser = (req: Request): AuthenticatedUser => {
   if (!req.user) {
     throw new AppError("Authentication required", 401);
   }
@@ -11,5 +11,5 @@ export const requireUser = (req: Request): IUser => {
 
 export const getUserId = (req: Request): string => {
   const user = requireUser(req);
-  return (user._id as any).toString();
+  return user._id;
 };

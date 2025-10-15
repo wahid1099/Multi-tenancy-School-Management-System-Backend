@@ -7,6 +7,13 @@ import {
   validateTenant,
 } from "../../middlewares/auth.middleware";
 import {
+  validateRoleAccess,
+  validateResourceAccess,
+  validateTenantAccess,
+  validateUserCreation,
+  validateRoleUpdate,
+} from "../../middlewares/permission.middleware";
+import {
   validate,
   validateQuery,
   validateParams,
@@ -344,6 +351,89 @@ router.patch(
   userController.changePassword
 );
 
+// Role hierarchy management routes
+/**
+ * @swagger
+ * /api/v1/users/available-roles:
+ *   get:
+ *     summary: Get available roles for user creation
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Available roles retrieved successfully
+ */
+router.get(
+  "/available-roles",
+  validateRoleAccess("admin"),
+  userController.getAvailableRoles
+);
+
+/**
+ * @swagger
+ * /api/v1/users/my-created-users:
+ *   get:
+ *     summary: Get users created by current user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Created users retrieved successfully
+ */
+router.get(
+  "/my-created-users",
+  validateRoleAccess("admin"),
+  userController.getMyCreatedUsers
+);
+
+/**
+ * @swagger
+ * /api/v1/users/role-hierarchy:
+ *   get:
+ *     summary: Get role hierarchy information
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Role hierarchy information retrieved successfully
+ */
+router.get("/role-hierarchy", userController.getRoleHierarchy);
+
+/**
+ * @swagger
+ * /api/v1/users/bulk-create:
+ *   post:
+ *     summary: Bulk create users
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - users
+ *             properties:
+ *               users:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/User'
+ *     responses:
+ *       200:
+ *         description: Bulk user creation completed
+ */
+router.post(
+  "/bulk-create",
+  validateRoleAccess("admin"),
+  validateResourceAccess("user", "create"),
+  userController.bulkCreateUsers
+);
+
 // Admin/Tenant Admin only routes
 /**
  * @swagger
@@ -393,7 +483,7 @@ router.get(
  *         name: role
  *         schema:
  *           type: string
- *           enum: [admin, tenant_admin, teacher, student, parent]
+ *           enum: [super_admin, manager, admin, tenant_admin, teacher, student, parent]
  *     responses:
  *       200:
  *         description: Users retrieved successfully
@@ -403,6 +493,60 @@ router.get(
   authorize("admin", "tenant_admin"),
   validateQuery(userQuerySchema),
   userController.getAllUsers
+);
+
+/**
+ * @swagger
+ * /api/v1/users:
+ *   post:
+ *     summary: Create a new user with role hierarchy validation
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - email
+ *               - password
+ *               - role
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *               role:
+ *                 type: string
+ *                 enum: [super_admin, manager, admin, tenant_admin, teacher, student, parent]
+ *               tenant:
+ *                 type: string
+ *               managedTenants:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *       403:
+ *         description: Insufficient permissions
+ */
+router.post(
+  "/",
+  validateRoleAccess("admin"),
+  validateUserCreation(),
+  validateResourceAccess("user", "create"),
+  userController.createUser
 );
 
 /**
@@ -470,7 +614,7 @@ router.patch(
  * @swagger
  * /api/v1/users/{id}/role:
  *   patch:
- *     summary: Update user role
+ *     summary: Update user role with hierarchy validation
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -491,10 +635,12 @@ router.patch(
  *             properties:
  *               role:
  *                 type: string
- *                 enum: [admin, tenant_admin, teacher, student, parent]
+ *                 enum: [super_admin, manager, admin, tenant_admin, teacher, student, parent]
  *     responses:
  *       200:
  *         description: User role updated successfully
+ *       403:
+ *         description: Insufficient permissions
  *       404:
  *         description: User not found
  */
@@ -503,6 +649,7 @@ router.patch(
   authorize("admin", "tenant_admin"),
   validateParams(userParamsSchema),
   validate(updateUserRoleSchema),
+  validateRoleUpdate(),
   userController.updateUserRole
 );
 

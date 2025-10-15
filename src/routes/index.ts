@@ -11,6 +11,7 @@ import gradeRoutes from "../modules/grades/grade.routes";
 import timetableRoutes from "../modules/timetable/timetable.routes";
 import feeRoutes from "../modules/fees/fee.routes";
 import dashboardRoutes from "../modules/dashboard/dashboard.routes";
+import auditRoutes from "../modules/audit/audit.routes";
 
 const router = Router();
 
@@ -37,6 +38,7 @@ router.use("/grades", gradeRoutes);
 router.use("/timetables", timetableRoutes);
 router.use("/fees", feeRoutes);
 router.use("/dashboard", dashboardRoutes);
+router.use("/audit", auditRoutes);
 
 // 404 handler for API routes
 router.all("*", (req, res) => {

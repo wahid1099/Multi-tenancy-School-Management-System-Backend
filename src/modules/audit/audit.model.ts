@@ -1,9 +1,9 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IAuditLog extends Document {
-  actor: string; // User who performed the action
+  actor: mongoose.Types.ObjectId; // User who performed the action
   action: string; // Type of action performed
-  target?: string; // Target user/resource affected
+  target?: mongoose.Types.ObjectId; // Target user/resource affected
   resource?: string; // Resource type (user, role, etc.)
   details: Record<string, any>; // Additional action details
   tenant: string; // Tenant context

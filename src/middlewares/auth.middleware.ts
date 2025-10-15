@@ -30,8 +30,8 @@ export const authenticate = catchAsync(
     // 2) Verification token
     const decoded = jwt.verify(token, config.JWT_SECRET) as any;
 
-    // 3) Check if user still exists
-    const currentUser = await User.findById(decoded.id).select("+active");
+    // 3) Check if user still exists and get fresh data
+    const currentUser = await User.findById(decoded.id).select("+isActive");
     if (!currentUser) {
       return next(
         new AppError(
@@ -59,19 +59,44 @@ export const authenticate = catchAsync(
       );
     }
 
-    // Grant access to protected route
-    req.user = currentUser;
+    // Grant access to protected route with enhanced user data
+    req.user = {
+      _id: (currentUser._id as any).toString(),
+      role: currentUser.role as
+        | "super_admin"
+        | "manager"
+        | "admin"
+        | "tenant_admin"
+        | "teacher"
+        | "student"
+        | "parent",
+      roleLevel: currentUser.roleLevel,
+      tenant: currentUser.tenant,
+      managedTenants: currentUser.managedTenants || [],
+      roleScope: currentUser.roleScope,
+      permissions: currentUser.permissions || [],
+    };
     req.tenant = currentUser.tenant;
     next();
   }
 );
 
 /**
- * Authorize user based on roles
+ * Authorize user based on roles with hierarchy support
  */
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!req.user) {
+      return next(new AppError("Authentication required", 401));
+    }
+
+    // Check if user has any of the required roles
+    const hasRequiredRole = roles.includes(req.user.role);
+
+    // Super admin has access to everything
+    const isSuperAdmin = req.user.role === "super_admin";
+
+    if (!hasRequiredRole && !isSuperAdmin) {
       return next(
         new AppError("You do not have permission to perform this action", 403)
       );
@@ -107,15 +132,42 @@ export const extractTenant = (
 };
 
 /**
- * Middleware to ensure user belongs to the tenant
+ * Middleware to ensure user belongs to the tenant with role scope validation
  */
 export const validateTenant = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  if (req.user && req.user.tenant !== req.tenant) {
+  if (!req.user) {
+    return next(new AppError("Authentication required", 401));
+  }
+
+  // Super admin has access to all tenants
+  if (req.user.role === "super_admin") {
+    return next();
+  }
+
+  // Global scope users can access any tenant
+  if (req.user.roleScope === "global") {
+    return next();
+  }
+
+  // Limited scope users can access managed tenants
+  if (req.user.roleScope === "limited") {
+    if (req.user.managedTenants.includes(req.tenant)) {
+      return next();
+    }
     return next(new AppError("You do not have access to this tenant", 403));
   }
-  next();
+
+  // Tenant scope users can only access their own tenant
+  if (req.user.roleScope === "tenant") {
+    if (req.user.tenant === req.tenant) {
+      return next();
+    }
+    return next(new AppError("You do not have access to this tenant", 403));
+  }
+
+  return next(new AppError("Invalid role scope", 403));
 };

@@ -63,10 +63,20 @@ export interface UserQuery {
  */
 class UserService {
   /**
-   * Generate JWT token
+   * Generate JWT token with role hierarchy data
    */
-  private generateToken(id: string): string {
-    return jwt.sign({ id }, config.JWT_SECRET, {
+  private async generateToken(user: IUser): Promise<string> {
+    const payload = {
+      id: (user._id as mongoose.Types.ObjectId).toString(),
+      role: user.role,
+      roleLevel: user.roleLevel,
+      tenant: user.tenant,
+      roleScope: user.roleScope,
+      managedTenants: user.managedTenants || [],
+      permissions: user.permissions || [],
+    };
+
+    return jwt.sign(payload, config.JWT_SECRET, {
       expiresIn: config.JWT_EXPIRES_IN,
     } as jwt.SignOptions);
   }
@@ -115,9 +125,7 @@ class UserService {
     await user.save();
 
     // Generate tokens
-    const token = this.generateToken(
-      (user._id as mongoose.Types.ObjectId).toString()
-    );
+    const token = await this.generateToken(user);
     const refreshToken = this.generateRefreshToken(
       (user._id as mongoose.Types.ObjectId).toString()
     );
@@ -194,9 +202,7 @@ class UserService {
     await user.save({ validateBeforeSave: false });
 
     // Generate tokens
-    const token = this.generateToken(
-      (user._id as mongoose.Types.ObjectId).toString()
-    );
+    const token = await this.generateToken(user);
     const refreshToken = this.generateRefreshToken(
       (user._id as mongoose.Types.ObjectId).toString()
     );
